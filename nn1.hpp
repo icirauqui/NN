@@ -32,26 +32,37 @@ class nn1{
         void updateWeights();
 
         // Function to train the neural network give an array of datapoints
-        void train(std::vector<RowVector*> data);
+        void train(std::vector<RowVector*> input_data, std::vector<RowVector*> output_data);
+
+        // Function for the activation function
+        static Scalar activationFunction(Scalar x);
+        static Scalar activationFunctionDerivative(Scalar x);
+
+
+
+
+
 
         /*
-            Storage objects for working of neural network
-            Use pointers when using std::vector<Class> as std::vector<Class> calls destructor of
-            Class as soon as it is pushed back! When we use pointers it can't do that, besides it
-            also makes our neural network class less heavy!! It would be nice if you can use smart
-            pointers instead of usual ones like this
-        */
-
-
-
-
-
-
+         *  Storage objects for working of neural network
+         *  Use pointers when using std::vector<Class> as std::vector<Class> calls destructor of Class as soon
+         *  as it is pushed back! When we use pointers it can't do that, besides it also makes our neural network
+         *  class less heavy!! It would be nice if you can use smart pointers instead of usual ones like this. 
+         */
         std::vector<RowVector*> neuronLayers;   // Stores the different layers of our network
         std::vector<RowVector*> cacheLayers;    // Stores the unactivated values of layers
         std::vector<RowVector*> deltas;         // Stores the error contribution of each neuron
         std::vector<Matrix*> weights;           // The weight of each connection.
         Scalar learningRate;        
-        std::vector<uint> topology;             // Describes how many neurons we have in each layer
+
+
+        /*
+         *  Topology describes how many neurons we have in each layer, its size is the number of layers.
+         *  Each layer is an array of neurons
+         *  We store each layer in a vector, each element stores the activation value of the neuron
+         */
+        std::vector<uint> topology;
+
+
 
 };
