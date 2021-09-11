@@ -14,7 +14,7 @@ class nn1{
     public:
 
         // Constructor
-        nn1(std::vector<uint> topology, Scalar learningRate = Scalar(0.005));
+        nn1(std::vector<uint> topology, Scalar learningRate = Scalar(0.005), bool bDebug = false);
         
         // Destructor
         ~nn1();
@@ -44,25 +44,24 @@ class nn1{
 
 
         /*
-         *  Storage objects for working of neural network
-         *  Use pointers when using std::vector<Class> as std::vector<Class> calls destructor of Class as soon
-         *  as it is pushed back! When we use pointers it can't do that, besides it also makes our neural network
-         *  class less heavy!! It would be nice if you can use smart pointers instead of usual ones like this. 
+         * Storage objects for working of neural network
+         * Use pointers when using std::vector<Class>, otherwise destructor of Class is called as it is pushed back!
+         * Besides it also makes the NN class less heavy!! Try moving to Smart Pointers. 
          */
-        std::vector<RowVector*> neuronLayers;   // Stores the different layers of our network
+        std::vector<RowVector*> neuronLayers;   // Stores the different layers of our network, each one is an array of neurons
+                                                // We store each layer in a vector, each element stores the activation value of the neuron
+
         std::vector<RowVector*> cacheLayers;    // Stores the unactivated values of layers
         std::vector<RowVector*> deltas;         // Stores the error contribution of each neuron
         std::vector<Matrix*> weights;           // The weight of each connection.
         Scalar learningRate;        
 
 
-        /*
-         *  Topology describes how many neurons we have in each layer, its size is the number of layers.
-         *  Each layer is an array of neurons
-         *  We store each layer in a vector, each element stores the activation value of the neuron
-         */
+        // Topology describes how many neurons we have in each layer, its size is the number of layers.
         std::vector<uint> topology;
 
+        // Debugging flag
+        bool bDebug;
 
 
 };

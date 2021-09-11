@@ -1,8 +1,9 @@
 #include "nn1.hpp"
 
-nn1::nn1(std::vector<uint> topology, Scalar learningRate){
+nn1::nn1(std::vector<uint> topology, Scalar learningRate, bool bDebug){
     this->topology = topology;
     this->learningRate = learningRate;
+    this->bDebug = bDebug;
 
     for (uint i=0; i<topology.size(); i++){
         // Initialize neuron layers
@@ -38,6 +39,57 @@ nn1::nn1(std::vector<uint> topology, Scalar learningRate){
         }
 
     }
+
+    if (bDebug) {
+        std::cout << " neuron layers " << std::endl;
+        for (int i=0; i<neuronLayers.size(); i++){
+            RowVector aa = *neuronLayers[i];
+            std::cout << aa.size() << " - ";
+            for (int j=0; j<aa.size(); j++)
+                std::cout << aa[j] << " ";
+            std::cout << std::endl;
+        }
+
+        std::cout << " cache layers " << std::endl;
+        for (int i=0; i<cacheLayers.size(); i++){
+            RowVector aa = *cacheLayers[i];
+            std::cout << aa.size() << " - ";
+            for (int j=0; j<aa.size(); j++)
+                std::cout << aa[j] << " ";
+            std::cout << std::endl;
+        }
+
+        std::cout << " deltas " << std::endl;
+        for (int i=0; i<deltas.size(); i++){
+            RowVector aa = *deltas[i];
+            std::cout << aa.size() << " - ";
+            for (int j=0; j<aa.size(); j++)
+                std::cout << aa[j] << " ";
+            std::cout << std::endl;
+        }
+
+        std::cout << " weights " << std::endl;
+        for (int i=0; i<weights.size(); i++){
+            Matrix aa = *weights[i];
+            std::cout << " - " << aa.size() << " " << aa.rows() << " " << aa.cols() << std::endl;
+            for (int j=0; j<aa.rows(); j++){
+                for (int k=0; k<aa.cols(); k++)
+                    std::cout << aa(j,k) << " ";
+                std::cout << std::endl;
+            }
+            std::cout << std::endl;
+        }
+    }
+    
+
+
+    //    for (int i=0; i<in_dat.size(); i++){
+    //    std::cout << *in_dat[i] << " ";
+    //}
+    //std::cout << std::endl << std::endl << std::endl;
+
+
+
 }
 
 
@@ -45,18 +97,15 @@ nn1::~nn1(){}
 
 
 void nn1::propagateForward(RowVector& input){
-    // Set the input to input layer. Block returns a part of the given vector or matrix
-    // Block takes 4 arguments: startRow, startCol, blockRows, blockCols
+    // Set the input to input layer. Block(startRow, startCol, blockRows, blockCols) returns a part of the given matrix
     neuronLayers.front()->block(0, 0, 1, neuronLayers.front()->size()-1) = input;
 
     // Propagate the data forward
     for (uint i=1; i<topology.size(); i++)
         (*neuronLayers[i]) = (*neuronLayers[i - 1]) * (*weights[i - 1]);
 
-    // Apply the activation function to your network
-    // unaryExpr applies the given function to all elements of CURRENT_LAYER
+    // Apply the activation function to all elements of CURRENT_LAYER using unaryExpr
     for (uint i = 1; i < topology.size() - 1; i++)
-        //neuronLayers[i]->block(0, 0, 1, topology[i]).unaryExpr(std::ptr_fun(activationFunction));
         neuronLayers[i]->block(0, 0, 1, topology[i]).unaryExpr(std::ptr_fun(activationFunction));
 }
 
@@ -86,20 +135,14 @@ void nn1::updateWeights(){
         // In this loop we are iterating over the different layers (from first hidden to output layer)
         // If this layer is the output layer, there is no bias neuron there, number of neurons specified = number of cols
         // If this layer is not the output layer, there is a bias neuron and number of neurons specified = number of cols - 1
-        if (i != topology.size() - 2) {
-            for (uint c = 0; c<weights[i]->cols() - 1; c++){
-                for (uint r = 0; r<weights[i]->rows(); r++){
+        if (i != topology.size() - 2) 
+            for (uint c = 0; c<weights[i]->cols() - 1; c++)
+                for (uint r = 0; r<weights[i]->rows(); r++)
                     weights[i]->coeffRef(r,c) += learningRate * deltas[i+1]->coeffRef(c) * activationFunctionDerivative(cacheLayers[i+1]->coeffRef(c)) * neuronLayers[i]->coeffRef(r);
-                }
-            }
-        }
-        else{
-            for (uint c = 0; c<weights[i]->cols(); c++){
-                for (uint r = 0; r<weights[i]->rows(); r++){
+        else
+            for (uint c = 0; c<weights[i]->cols(); c++)
+                for (uint r = 0; r<weights[i]->rows(); r++)
                     weights[i]->coeffRef(r,c) += learningRate * deltas[i+1]->coeffRef(c) * activationFunctionDerivative(cacheLayers[i+1]->coeffRef(c)) * neuronLayers[i]->coeffRef(r);
-                }
-            }
-        }
     }
 }
 
@@ -107,12 +150,11 @@ void nn1::updateWeights(){
 
 void nn1::train(std::vector<RowVector*> input_data, std::vector<RowVector*> output_data){
     for (uint i = 0; i < input_data.size(); i++){
-        std::cout << "Input to neural network is: " << *input_data[i] << std::endl;
+        if (bDebug) std::cout << "Input-Expected-Computed-MSE\t" << *input_data[i];
         propagateForward(*input_data[i]);
-        std::cout << "Expected output is: " << *output_data[i] << std::endl;
-        std::cout << "Output produced is: " << *neuronLayers.back() << std::endl;
+        if (bDebug) std::cout << "\t" << *output_data[i] << "\t" << *neuronLayers.back();
         propagateBackward(*output_data[i]);
-        std::cout << "MSE: " << std::sqrt((*deltas.back()).dot((*deltas.back())) / deltas.back()->size()) << std::endl;
+        if (bDebug) std::cout << "\t" << std::sqrt((*deltas.back()).dot((*deltas.back())) / deltas.back()->size()) << std::endl;
     }
 }
 
